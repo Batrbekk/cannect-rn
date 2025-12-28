@@ -1,0 +1,44 @@
+{
+  "name": "main",
+  "displayName": "Cannect Vending",
+  "expo": {
+    "name": "Cannect Vending",
+    "slug": "cannect-vending-app",
+    "version": "1.0.0",
+    "orientation": "landscape",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "platforms": ["android"],
+    "ios": {
+      "bundleIdentifier": "com.cannect.vending"
+    },
+    "android": {
+      "package": "com.cannect.vending",
+      "usesCleartextTraffic": true,
+      "networkSecurityConfig": "./network_security_config.xml",
+      "screenOrientation": "landscape",
+      "userInterfaceStyle": "dark",
+      "softwareKeyboardLayoutMode": "pan",
+      "windowSoftInputMode": "adjustPan",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#0F172A",
+      "barStyle": "light-content",
+      "translucent": false
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#0F172A",
+      "barStyle": "light-content",
+      "visible": false
+    }
+  }
+}
