@@ -98,14 +98,6 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ navi
           <Text style={styles.successTitle}>Оплата прошла успешно!</Text>
           <Text style={styles.successSubtitle}>Заберите ваш заказ</Text>
 
-          {/* Таймер обратного отсчета */}
-          {secondsLeft !== null && (
-            <View style={styles.countdownContainer}>
-              <Text style={styles.countdownText}>
-                Переход на главную через {secondsLeft} сек...
-              </Text>
-            </View>
-          )}
 
           {/* Чек */}
           <View style={styles.receiptContainer}>
