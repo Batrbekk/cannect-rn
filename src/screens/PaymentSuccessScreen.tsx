@@ -15,8 +15,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCartStore } from '../store/cartStore';
 import { Colors, BorderRadius, Spacing } from '../constants/theme';
 import { IMAGE_BASE_URL } from '../services/api';
-import { vendingMachineService } from '../services/vendingMachine';
-import { VendingDispenseResult, VendingDispenseStatus } from '../types';
+// Для казахстанского прототипа - выдача автоматическая
+// import { vendingMachineService } from '../services/vendingMachine';
+// import { VendingDispenseResult, VendingDispenseStatus } from '../types';
 
 interface PaymentSuccessScreenProps {
   navigation: any;
@@ -30,11 +31,9 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ navi
   const transaction = route.params?.transaction;
   const cartItems = route.params?.cartItems || [];
 
-  // Состояние выдачи товаров
-  const [dispensingStatus, setDispensingStatus] = useState<'pending' | 'dispensing' | 'completed' | 'error'>('pending');
-  const [dispenseResults, setDispenseResults] = useState<VendingDispenseResult[]>([]);
-  const [currentDispensingItem, setCurrentDispensingItem] = useState<number>(0);
-  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  // Для KZ прототипа - выдача автоматическая после оплаты
+  // Только таймер для возврата на главную
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(15);
 
   const currentDate = transaction?.timestamp ? new Date(transaction.timestamp) : new Date();
   const formattedDate = currentDate.toLocaleDateString('ru-RU', {
@@ -51,107 +50,22 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ navi
     // Очищаем корзину после успешной оплаты
     clearCart();
 
-    // Начинаем выдачу товаров
-    dispenseProducts();
-  }, [clearCart]);
-
-  // Автоматический переход на главную через 15 секунд после успешной выдачи
-  useEffect(() => {
-    if (dispensingStatus === 'completed') {
-      // Запускаем таймер на 15 секунд
-      setSecondsLeft(15);
-
-      const countdownInterval = setInterval(() => {
-        setSecondsLeft(prev => {
-          if (prev === null || prev <= 1) {
-            clearInterval(countdownInterval);
-            navigation.navigate('Main');
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(countdownInterval);
-    }
-  }, [dispensingStatus, navigation]);
-
-  // Выдача всех товаров из заказа
-  const dispenseProducts = async () => {
-    console.log('🎁 Начинаем выдачу товаров...');
-    setDispensingStatus('dispensing');
-
-    const items = transaction?.items || cartItems;
-    const results: VendingDispenseResult[] = [];
-
-    try {
-      // Инициализируем вендинговый автомат
-      await vendingMachineService.initialize();
-
-      // Выдаём каждый товар
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        setCurrentDispensingItem(i + 1);
-
-        console.log(`📦 Выдача товара ${i + 1}/${items.length}: ${item.name}`);
-
-        try {
-          // Выдаём товар (повторяем quantity раз)
-          for (let q = 0; q < item.quantity; q++) {
-            const isLastItem = i === items.length - 1 && q === item.quantity - 1;
-
-            const result = await vendingMachineService.dispenseProduct(
-              item.productId || item._id || item.id,
-              0, // cabinetAddress = 0
-              isLastItem
-            );
-
-            results.push(result);
-
-            if (!result.success) {
-              console.error(`❌ Ошибка выдачи товара ${item.name}:`, result.message);
-              // Продолжаем выдачу остальных товаров
-            } else {
-              console.log(`✅ Товар ${item.name} успешно выдан`);
-            }
-
-            // Небольшая задержка между выдачами
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        } catch (error) {
-          console.error(`❌ Ошибка при выдаче ${item.name}:`, error);
-          results.push({
-            success: false,
-            status: VendingDispenseStatus.FAILED,
-            position: { row: 0, column: 0 },
-            message: `Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`,
-          });
+    // В KZ прототипе выдача автоматическая - сразу запускаем таймер
+    const countdownInterval = setInterval(() => {
+      setSecondsLeft(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(countdownInterval);
+          navigation.navigate('Main');
+          return null;
         }
-      }
+        return prev - 1;
+      });
+    }, 1000);
 
-      setDispenseResults(results);
+    return () => clearInterval(countdownInterval);
+  }, [clearCart, navigation]);
 
-      // Проверяем были ли ошибки
-      const hasErrors = results.some(r => !r.success);
-      setDispensingStatus(hasErrors ? 'error' : 'completed');
-
-      if (hasErrors) {
-        Alert.alert(
-          'Частичная выдача товаров',
-          'Некоторые товары не удалось выдать. Пожалуйста, обратитесь к персоналу.',
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      console.error('❌ Критическая ошибка выдачи:', error);
-      setDispensingStatus('error');
-      Alert.alert(
-        'Ошибка выдачи',
-        'Не удалось выдать товары. Пожалуйста, обратитесь к персоналу.',
-        [{ text: 'OK' }]
-      );
-    }
-  };
+  // Для KZ прототипа функция выдачи не нужна - выдача автоматическая
 
   const handleBackToMain = () => {
     navigation.navigate('Main');
@@ -182,62 +96,26 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ navi
 
           {/* Заголовок */}
           <Text style={styles.successTitle}>Оплата прошла успешно!</Text>
-          <Text style={styles.successSubtitle}>
-            {dispensingStatus === 'dispensing' ? 'Готовим ваш заказ...' : 'Заберите ваш заказ'}
-          </Text>
+          <Text style={styles.successSubtitle}>Заберите ваш заказ</Text>
 
-          {/* Статус выдачи */}
-          {dispensingStatus === 'dispensing' && (
-            <View style={styles.dispensingContainer}>
-              <LinearGradient
-                colors={Colors.gradient.purple}
-                style={styles.dispensingGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <ActivityIndicator size="large" color={Colors.white} />
-                <Text style={styles.dispensingText}>
-                  Выдача товара {currentDispensingItem} из {(transaction?.items || cartItems).length}
+          {/* Сообщение об автоматической выдаче для KZ */}
+          <View style={styles.dispensingContainer}>
+            <LinearGradient
+              colors={['#10B981', '#059669']}
+              style={styles.dispensingGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Ionicons name="checkmark-circle" size={48} color={Colors.white} />
+              <Text style={styles.dispensingText}>Товары выданы автоматически!</Text>
+              <Text style={styles.dispensingSubtext}>Спасибо за покупку</Text>
+              {secondsLeft !== null && (
+                <Text style={styles.countdownText}>
+                  Переход на главную через {secondsLeft} сек...
                 </Text>
-                <Text style={styles.dispensingSubtext}>Пожалуйста, подождите...</Text>
-              </LinearGradient>
-            </View>
-          )}
-
-          {dispensingStatus === 'completed' && (
-            <View style={styles.dispensingContainer}>
-              <LinearGradient
-                colors={['#10B981', '#059669']}
-                style={styles.dispensingGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons name="checkmark-circle" size={48} color={Colors.white} />
-                <Text style={styles.dispensingText}>Все товары выданы!</Text>
-                <Text style={styles.dispensingSubtext}>Спасибо за покупку</Text>
-                {secondsLeft !== null && (
-                  <Text style={styles.countdownText}>
-                    Переход на главную через {secondsLeft} сек...
-                  </Text>
-                )}
-              </LinearGradient>
-            </View>
-          )}
-
-          {dispensingStatus === 'error' && (
-            <View style={styles.dispensingContainer}>
-              <LinearGradient
-                colors={['#EF4444', '#DC2626']}
-                style={styles.dispensingGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons name="alert-circle" size={48} color={Colors.white} />
-                <Text style={styles.dispensingText}>Ошибка выдачи</Text>
-                <Text style={styles.dispensingSubtext}>Обратитесь к персоналу</Text>
-              </LinearGradient>
-            </View>
-          )}
+              )}
+            </LinearGradient>
+          </View>
 
           {/* Чек */}
           <View style={styles.receiptContainer}>
