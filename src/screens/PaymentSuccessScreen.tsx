@@ -98,24 +98,14 @@ export const PaymentSuccessScreen: React.FC<PaymentSuccessScreenProps> = ({ navi
           <Text style={styles.successTitle}>Оплата прошла успешно!</Text>
           <Text style={styles.successSubtitle}>Заберите ваш заказ</Text>
 
-          {/* Сообщение об автоматической выдаче для KZ */}
-          <View style={styles.dispensingContainer}>
-            <LinearGradient
-              colors={['#10B981', '#059669']}
-              style={styles.dispensingGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Ionicons name="checkmark-circle" size={48} color={Colors.white} />
-              <Text style={styles.dispensingText}>Товары выданы автоматически!</Text>
-              <Text style={styles.dispensingSubtext}>Спасибо за покупку</Text>
-              {secondsLeft !== null && (
-                <Text style={styles.countdownText}>
-                  Переход на главную через {secondsLeft} сек...
-                </Text>
-              )}
-            </LinearGradient>
-          </View>
+          {/* Таймер обратного отсчета */}
+          {secondsLeft !== null && (
+            <View style={styles.countdownContainer}>
+              <Text style={styles.countdownText}>
+                Переход на главную через {secondsLeft} сек...
+              </Text>
+            </View>
+          )}
 
           {/* Чек */}
           <View style={styles.receiptContainer}>
@@ -484,12 +474,15 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     textAlign: 'center',
   },
+  countdownContainer: {
+    marginVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    alignItems: 'center',
+  },
   countdownText: {
     fontSize: 14,
-    color: Colors.white,
-    opacity: 0.85,
+    color: Colors.text.secondary,
     textAlign: 'center',
-    marginTop: Spacing.sm,
     fontStyle: 'italic',
   },
 });
